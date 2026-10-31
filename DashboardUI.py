@@ -13,6 +13,8 @@ class DashboardUI:
         search_keyword = st.sidebar.text_input("대여소 이름 검색", placeholder="예: 광운대역")
         min_bikes = st.sidebar.slider("최소 잔여 자전거 수", 0, 20, 5)
         status_filter = st.sidebar.selectbox("혼잡도 상태", ["전체", "여유", "보통", "부족"])
+        if st.sidebar.button("새로고침"):
+            st.rerun()
         return search_keyword, min_bikes, status_filter
 
     #통계영역
