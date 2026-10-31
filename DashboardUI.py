@@ -133,5 +133,6 @@ class DashboardUI:
             self.show_chart()
 
 
-ui = DashboardUI()
-ui.run()
+if __name__ == "__main__":
+    ui = DashboardUI()
+    ui.run()
