@@ -1,0 +1,8 @@
+[theme]
+primaryColor = "#1e7a46"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f4f7f4"
+textColor = "#1c2420"
+font = "Pretendard:https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css, sans-serif"
+[client]
+toolbarMode = "minimal"
