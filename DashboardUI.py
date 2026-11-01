@@ -3,20 +3,28 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import folium
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 class DashboardUI:
     def __init__(self):
         self.colors = {"부족": "#e8333f", "보통": "#f59f00", "여유": "#0ca678"}
 
+    def reset_filters(self):
+        st.session_state["search"] = ""
+        st.session_state["status"] = "전체"
+        st.session_state["min_bikes"] = 0    
+
     #검색 사이드바
-    def render_sidebar(self): 
-        st.sidebar.header("대여소 검색")
-        search_keyword = st.sidebar.text_input("대여소 이름 검색", placeholder="예: 광운대역")
-        min_bikes = st.sidebar.slider("최소 잔여 자전거 수", 0, 20, 5)
-        status_filter = st.sidebar.selectbox("혼잡도 상태", ["전체", "여유", "보통", "부족"])
-        if st.sidebar.button("새로고침"):
-            st.rerun()
-        return search_keyword, min_bikes, status_filter
+    def render_sidebar(self):
+        with st.sidebar.container(key="filter_card"):
+            st.subheader("대여소 검색")
+            search_keyword = st.text_input("대여소 검색", placeholder="대여소 검색 (예: 광운대역)", key="search", label_visibility="collapsed")
+            status_filter = st.pills("혼잡도 상태", ["전체", "부족", "보통", "여유"], default="전체", key="status", label_visibility="collapsed")
+            min_bikes = st.slider("최소 잔여 자전거 수", 0, 20, 0, key="min_bikes")
+            if st.button("필터 초기화", type="primary", width="stretch", on_click=self.reset_filters):
+                st.rerun()
+        return search_keyword, min_bikes, status_filter or "전체"
 
     #통계영역
     #todo - 더미 데이터라 api 받아오면 삭제
@@ -186,7 +194,16 @@ class DashboardUI:
             [data-testid="stMetric"] > div {padding:8px 16px !important;}
             h1{font-size:1.75rem !important;padding-top:0 !important;}
             [data-testid="stMetricValue"]{font-size:1.6rem !important;font-weight:700 !important;line-height:1.2 !important;}
-            [data-testid="stMetricLabel"] p{font-size:0.8rem !important;color:#5d6a62 !important;}            [data-testid="stHeader"]{background:transparent;}
+            [data-testid="stMetricLabel"] p{font-size:0.8rem !important;color:#5d6a62 !important;}
+            [data-testid="stHeader"]{background:transparent;}
+            .st-key-filter_card [data-testid="stSlider"] [role="group"] > div > div:first-child{height:5px !important;border-radius:999px;}
+            .st-key-filter_card [data-testid="stSlider"] [role="group"] > div > div:nth-child(2){width:18px !important;height:18px !important;border:3px solid #ffffff;box-shadow:0 1px 4px rgba(0,0,0,0.3);}            
+            .st-key-filter_card{background:#ffffff;border-radius:16px;padding:20px 14px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+            .st-key-filter_card [data-testid="stTextInputRootElement"]{border-radius:999px !important;background:#f4f7f4 !important;}
+            .st-key-filter_card input{background:transparent !important;}
+            .st-key-filter_card button[data-variant="pills"]{padding:4px 9px !important;min-width:0 !important;}
+            .st-key-filter_card button[aria-checked="true"]{background:#1e7a46 !important;border-color:#1e7a46 !important;color:#ffffff !important;}
+            .st-key-filter_card button[aria-checked="true"] p{color:#ffffff !important;}
             [data-testid="stColumn"]:has([class*="st-key-card"]) > [data-testid="stVerticalBlock"],
             [data-testid="stLayoutWrapper"]:has(> [class*="st-key-card"]),
             [class*="st-key-card"] {height:100%;}
@@ -214,11 +231,19 @@ class DashboardUI:
         )
         self.apply_style()
 
-        st.title("서울시 공공자전거 대여 현황")
+        updated_at = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%H:%M:%S")
+        with st.container(horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
+            st.title("서울시 공공자전거 대여 현황")
+            with st.container(horizontal=True, vertical_alignment="center", width="content", gap="small"):
+                st.caption(f"마지막 갱신 {updated_at}", width="content")
+                if st.button("", icon=":material/refresh:", type="tertiary"):
+                    st.rerun()
 
         # 각 메서드 호출 실행
-        self.render_sidebar()
+        search_keyword, min_bikes, status_filter = self.render_sidebar()
         df = self.get_dummy_data()
+        if status_filter != "전체":
+            df = df[df["status"] == status_filter]
         self.show_metrics(self.get_dummy_summary(df))
 
         # todo - 도표나 그래프 추가!
