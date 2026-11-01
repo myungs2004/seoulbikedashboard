@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import folium
 
 class DashboardUI:
     def __init__(self):
@@ -30,13 +31,51 @@ class DashboardUI:
 
     #지도영역
     #todo - Folium map으로 개선 가능
-    def show_map(self): 
-        st.subheader("서울시 대여소 현황 지도 (Prototype)")
-        map_data = pd.DataFrame(
-            np.random.randn(50, 2) / [50, 50] + [37.5665, 126.9780],
-            columns=['lat', 'lon']
-        )
-        st.map(map_data)
+    def show_map(self, df):
+        st.subheader("서울시 대여소 현황 지도")
+        colors = {"부족": "#e8333f", "보통": "#f59f00", "여유": "#0ca678"}
+        center = [df["stationLatitude"].mean(), df["stationLongitude"].mean()]
+        station_map = folium.Map(location=center, zoom_start=14, scroll_wheel_zoom="center")
+        folium.TileLayer("OpenStreetMap", max_zoom=18).add_to(station_map)
+        station_map.get_root().header.add_child(folium.Element(
+        "<style>.leaflet-tile-pane { filter: saturate(0.8) brightness(1.12); opacity: 0.6; } .leaflet-interactive { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35)); }</style>"
+        ))        
+        for _, row in df.iterrows():
+            folium.CircleMarker(
+                location=[row["stationLatitude"], row["stationLongitude"]],
+                radius=9,
+                color="white",
+                weight=1.5,
+                fill=True,
+                fill_color=colors[row["status"]],
+                fill_opacity=1,
+                popup=folium.Popup(
+                    f"""
+                    <div style="font-size:13px; line-height:1.6;">
+                        <b style="font-size:15px;">{row['stationName']}</b><br>
+                        자전거 {row['parkingBikeTotCnt']}대 / 거치대 {row['rackTotCnt']}개<br>
+                        상태: {row['status']}
+                    </div>
+                    """,
+                    min_width=180,
+                    max_width=250,
+                ),            
+                ).add_to(station_map)
+        station_map.get_root().script.add_child(folium.Element(
+            f"""
+            window.addEventListener("load", function () {{
+                var map = {station_map.get_name()};
+                function resize() {{
+                    var r = Math.max(3, Math.min(11, map.getZoom() - 5));
+                    map.eachLayer(function (layer) {{
+                        if (layer instanceof L.CircleMarker) {{ layer.setRadius(r); }}
+                    }});
+                }}
+                map.on("zoomend", resize);
+                resize();
+            }});
+        """))            
+        st.iframe(station_map.get_root().render(), height=450)
 
 
     # 테이블영역
@@ -109,6 +148,17 @@ class DashboardUI:
             )
             st.plotly_chart(fig_pie, width="stretch")
 
+    def get_dummy_data(self):
+        return pd.DataFrame({
+            "stationName": ["광운대역 3번출구", "석계역 1번출구", "월계이마트", "공릉역 2번출구", "태릉입구역"],
+            "stationLatitude": [37.6243, 37.6152, 37.6268, 37.6255, 37.6176],
+            "stationLongitude": [127.0612, 127.0659, 127.0552, 127.0729, 127.0749],
+            "rackTotCnt": [15, 20, 10, 25, 15],
+            "parkingBikeTotCnt": [2, 14, 1, 18, 5],
+            "rate": [13, 70, 10, 72, 33],
+            "status": ["부족", "여유", "부족", "여유", "보통"],
+        })
+    
     def run(self):
         # 페이지 기본 설정
         st.set_page_config(
@@ -128,7 +178,7 @@ class DashboardUI:
         # todo - 도표나 그래프 추가!
         tab1, tab2,tab3 = st.tabs(["🗺️ 대여소 지도", "📊 데이터 테이블", "📈 차트"])
         with tab1:
-            self.show_map()
+            self.show_map(self.get_dummy_data())
         with tab2:
             self.show_table()
         with tab3:
