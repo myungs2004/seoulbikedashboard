@@ -124,21 +124,34 @@ class DashboardUI:
             }}
         }});
     }});
-    """))                    
+    """))                           
         st.iframe(station_map.get_root().render(), height=340)
+        legend_items = "".join(
+            f'<span><i style="background:{color};"></i>{status}</span>'
+            for status, color in self.colors.items()
+        )
+        with st.container(key="legend"):
+            st.html(f'<div class="legend">{legend_items}</div>')        
 
 
     # 테이블영역
     def show_table(self, df):
-        table = df[["stationName", "rackTotCnt", "parkingBikeTotCnt", "rate", "status"]]
-        table = table.rename(columns={
-            "stationName": "대여소",
-            "rackTotCnt": "거치대",
-            "parkingBikeTotCnt": "자전거",
-            "rate": "대여율(%)",
-            "status": "상태",
-        })
-        st.dataframe(table, width="stretch", hide_index=True, height=210)
+        table = df[["stationId","stationName", "rackTotCnt", "parkingBikeTotCnt", "rate", "status"]].copy()
+        table["status"] = table["status"].apply(lambda s: [s])
+        st.dataframe(
+            table,
+            width="stretch",
+            hide_index=True,
+            height=210,
+            column_config={
+                "stationId": st.column_config.TextColumn("대여소 ID"),
+                "stationName": st.column_config.TextColumn("대여소명"),
+                "rackTotCnt": st.column_config.NumberColumn("거치대 수", format="%d개"),
+                "parkingBikeTotCnt": st.column_config.NumberColumn("현재 자전거", format="%d대"),
+                "rate": st.column_config.ProgressColumn("대여 가능률", format="%d%%", min_value=0, max_value=100, color="#1e7a46"),
+                "status": st.column_config.MultiselectColumn("상태", options=["부족", "보통", "여유"], color=["#fde7e8", "#fff1d6", "#dcf5ec"]),
+            },
+        )
 
     #차트영역
     def show_chart(self, df):
@@ -214,6 +227,7 @@ class DashboardUI:
     #todo - api 연결되면 DataFetcher/DataProcessor 결과로 교체            
     def get_dummy_data(self):
         return pd.DataFrame({
+            "stationId": ["ST-1", "ST-2", "ST-3", "ST-4", "ST-5"],
             "stationName": ["광운대역 3번출구", "석계역 1번출구", "월계이마트", "공릉역 2번출구", "태릉입구역"],
             "stationLatitude": [37.6243, 37.6152, 37.6268, 37.6255, 37.6176],
             "stationLongitude": [127.0612, 127.0659, 127.0552, 127.0729, 127.0749],
@@ -284,6 +298,10 @@ class DashboardUI:
             iframe.stIFrame {border-radius:20px;}
             .st-key-metrics [data-testid="stMetricLabel"]{min-height:2.4em !important;align-content:start;}
             }
+            [data-testid="stLayoutWrapper"]:has(> .st-key-legend){height:0;margin-bottom:-1rem;z-index:5;pointer-events:none;}
+            .st-key-legend .legend{display:flex;justify-content:flex-end;gap:12px;padding-top:12px;font-size:12px;color:#5d6a62;}
+            .st-key-legend .legend span{display:inline-flex;align-items:center;gap:5px;}
+            .st-key-legend .legend i{width:9px;height:9px;border-radius:50%;}
             </style>"""
         )    
     
