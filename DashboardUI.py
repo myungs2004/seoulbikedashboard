@@ -20,7 +20,7 @@ class DashboardUI:
     #검색 사이드바
     def render_sidebar(self):
         with st.sidebar.container(key="filter_card"):
-            st.subheader("대여소 검색")
+            st.subheader("대여소 검색 및 필터")
             search_keyword = st.text_input("대여소 검색", placeholder="대여소 검색 (예: 광운대역)", key="search", label_visibility="collapsed", on_change=self.clear_snapshot)
             status_filter = st.pills("혼잡도 상태", ["전체", "부족", "보통", "여유"], default="전체", key="status", label_visibility="collapsed", on_change=self.clear_snapshot)
             min_bikes = st.slider("최소 잔여 자전거 수", 0, 20, 0, key="min_bikes", on_change=self.clear_snapshot)
@@ -193,10 +193,12 @@ class DashboardUI:
                     barcornerradius="50%",
                     showlegend=False,
                     margin=dict(l=130, r=30, t=10, b=0),
-                    xaxis=dict(visible=False),
-                    yaxis=dict(autorange="reversed", visible=False),
+                    xaxis=dict(visible=False, fixedrange=True),
+                    yaxis=dict(autorange="reversed", visible=False, fixedrange=True),
+                    dragmode=False,
                 )
-                st.plotly_chart(fig_bar, width="stretch")
+                fig_bar.update_traces(hovertemplate="%{y}<br>잔여 %{x}대<extra></extra>")
+                st.plotly_chart(fig_bar, width="stretch", config={"displayModeBar": False})
 
         with col_right:
             with st.container(border=True, key="card_pie"):
@@ -222,7 +224,8 @@ class DashboardUI:
                         font=dict(size=15, color="#1c2420"),
                     )                
                 fig_pie.update_layout(height=135, showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
-                st.plotly_chart(fig_pie, width="stretch")
+                fig_pie.update_traces(hovertemplate="%{label} %{value}곳 (%{percent:.0%})<extra></extra>")
+                st.plotly_chart(fig_pie, width="stretch", config={"displayModeBar": False})
 
     #todo - api 연결되면 DataFetcher/DataProcessor 결과로 교체            
     def get_dummy_data(self):
