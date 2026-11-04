@@ -174,44 +174,45 @@ class DashboardUI:
             with st.container(border=True, key="card_bar"):
                 st.markdown("##### 자전거 부족 대여소")
                 
-                top_shortage_df = df.nsmallest(10, "parkingBikeTotCnt")
-                
+                top_shortage_df = df.assign(shortage=df["rackTotCnt"] - df["parkingBikeTotCnt"]).nlargest(10, "shortage")                
                 fig_bar = px.bar(
                     top_shortage_df,
                     color="status",
                     color_discrete_map=self.colors,
-                    x="parkingBikeTotCnt",
+                    x="shortage",
                     y="stationName",
                     orientation="h",
+                    category_orders={"stationName": list(top_shortage_df["stationName"])},
                     labels={"parkingBikeTotCnt": "잔여 자전거 수", "stationName": ""},
                     template="plotly_white",
                 )
                 for _, row in top_shortage_df.iterrows():
                     fig_bar.add_annotation(
                         x=0, xref="paper", y=row["stationName"],
-                        text=row["stationName"],
+                        text=row["stationName"] if len(row["stationName"]) <= 10 else row["stationName"][:9] + "…",
+                        hovertext=row["stationName"],                        
                         showarrow=False, xanchor="left", xshift=-125,
                         font=dict(size=13, color="#1c2420"),
                     )                    
                     fig_bar.add_annotation(
                         x=1, xref="paper", y=row["stationName"],
-                        text=str(row["parkingBikeTotCnt"]),
+                        text=f'{int(row["shortage"])}대',
                         showarrow=False, xanchor="right", xshift=25,
                         font=dict(size=13, color="#1c2420"),
                     )
                 fig_bar.update_layout(
                     height=220,
-                    bargap=0.3,
+                    bargap=0.67,
                     barcornerradius="50%",
                     showlegend=False,
                     margin=dict(l=130, r=30, t=10, b=0),
-                    xaxis=dict(range=[-8,20],visible=False, fixedrange=True),
-                    yaxis=dict(autorange="reversed", visible=False, fixedrange=True),
+                    xaxis=dict(visible=False, fixedrange=True),
+                    yaxis=dict(visible=False, fixedrange=True),
                     dragmode=False,
                 )
-                fig_bar.update_traces(hovertemplate="%{y}<br>잔여 %{x}대<extra></extra>")
-                st.plotly_chart(fig_bar, width="stretch", config={"displayModeBar": False})
-
+                fig_bar.update_traces(hovertemplate="%{y}<br>부족 %{x}대<extra></extra>")
+                with st.container(height=140, border=False):
+                    st.plotly_chart(fig_bar, width="stretch", config={"displayModeBar": False})
         with col_right:
             with st.container(border=True, key="card_pie"):
                 st.markdown("##### 혼잡도 비율")
@@ -235,7 +236,7 @@ class DashboardUI:
                         showarrow=False, xanchor="left",
                         font=dict(size=15, color="#1c2420"),
                     )                
-                fig_pie.update_layout(height=220, showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
+                fig_pie.update_layout(height=135, showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
                 fig_pie.update_traces(hovertemplate="%{label} %{value}곳 (%{percent:.0%})<extra></extra>")
                 st.plotly_chart(fig_pie, width="stretch", config={"displayModeBar": False})
 
