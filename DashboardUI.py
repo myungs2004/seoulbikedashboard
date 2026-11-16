@@ -18,7 +18,8 @@ class DashboardUI:
     def reset_filters(self):
         st.session_state["search"] = ""
         st.session_state["status"] = "전체"
-        st.session_state["min_bikes"] = 0    
+        st.session_state["min_bikes"] = 0
+        st.session_state["min_racks"] = 0          
         st.session_state["prev_summary"] = None        
 
     #검색 사이드바
@@ -28,9 +29,10 @@ class DashboardUI:
             search_keyword = st.text_input("대여소 검색", placeholder="대여소 검색 (예: 광운대역)", key="search", label_visibility="collapsed", on_change=self.clear_snapshot)
             status_filter = st.pills("혼잡도 상태", ["전체", "부족", "보통", "여유"], default="전체", key="status", label_visibility="collapsed", on_change=self.clear_snapshot)
             min_bikes = st.slider("최소 잔여 자전거 수", 0, 30, 3, key="min_bikes", on_change=self.clear_snapshot)
+            min_racks = st.slider("최소 거치대 수", 0, 30, 0, key="min_racks", on_change=self.clear_snapshot)            
             if st.button("필터 초기화", type="primary", width="stretch", on_click=self.reset_filters):
                 st.rerun()
-        return search_keyword, min_bikes, status_filter or "전체"
+        return search_keyword, min_bikes, min_racks, status_filter or "전체"    
     
     #새로고침 직전 숫자를 저장 (변화 표시 비교용)
     def save_snapshot(self):
@@ -325,8 +327,8 @@ class DashboardUI:
         df = processor.add_rate()
 
         # 사이드바 입력값 받기
-        search_keyword, min_bikes, status_filter = self.render_sidebar()
-
+        search_keyword, min_bikes, min_racks, status_filter = self.render_sidebar()
+        
         # StationFilter의 apply_filters로 통합 필터링 실행
         sf = StationFilter(df)
         filtered_df = sf.apply_filters(
