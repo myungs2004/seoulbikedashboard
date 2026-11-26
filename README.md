@@ -1,42 +1,60 @@
 # seoulbikedashboard
-객체지향프로그래밍
+> 객체지향프로그래밍 팀 프로젝트
 
-## 프로젝트 소개
-서울시 공공자전거(따릉이) 대여소별 실시간 잔여 자전거 수와 혼잡도를 확인하고 비교할 수 있는 Streamlit 대시보드입니다.
+서울시 공공자전거(따릉이) 대여소의 잔여 자전거 수와 혼잡도를 확인하고 비교할 수 있는 Streamlit 대시보드입니다.
 
-서울열린데이터광장의 따릉이 실시간 대여정보 Open API를 불러와서 대여소별 현황을 정리하고, 자전거 수급이 몰리는 대여소를 검색·필터·지도·차트로 한눈에 볼 수 있게 만들었습니다. 
+서울열린데이터광장의 따릉이 실시간 대여정보 Open API를 불러와서 대여소별 현황을 정리하고, 자전거 수급이 몰리는 대여소를 검색·필터·지도·차트로 한눈에 볼 수 있습니다.
 
 ## 데이터 및 혼잡도 기준
-데이터 출처: 서울열린데이터광장 — 서울시 공공자전거 실시간 대여정보 Open API
+서울열린데이터광장의 [공공자전거 실시간 대여정보 Open API](https://data.seoul.go.kr/dataList/OA-15493/A/1/datasetView.do)를 사용합니다.
 
-혼잡도 분류<br>
-부족: 대여가능률 20% 미만<br>
-보통: 대여가능률 20% 이상 ~ 60% 미만<br>
-여유: 대여가능률 60% 이상<br>
+**대여 가능률(%)** = (잔여 자전거 수 ÷ 거치대 수) × 100
+
+| 상태 | 대여 가능률 |
+| --- | --- |
+| 부족 | 20% 미만 |
+| 보통 | 20% 이상 60% 미만 |
+| 여유 | 60% 이상 |
 
 ## 구조 및 클래스 역할
 역할이 한 곳에 뭉치지 않도록 모듈과 클래스를 나눠서 구성했습니다.
 
-DataFetcher: Open API 요청과 원천 JSON 데이터 수집 <br>
-DataProcessor: JSON을 pandas.DataFrame으로 바꾸고, 결측치 정리 및 대여율·혼잡도 계산 수행<br>
-StationFilter: 대여소 이름 검색, 혼잡도 선택, 최소 자전거 수 등 사이드바 조건에 따른 연쇄 필터링<br>
-DashboardUI: KPI 지표, Folium 지도 마커, 차트, 표 등 Streamlit 화면 요소 렌더링<br>
+| 클래스 | 역할 |
+| --- | --- |
+| `DataFetcher` | 서울시 Open API를 호출해 대여소 원본 JSON을 수집 |
+| `DataProcessor` | JSON을 pandas DataFrame으로 변환, 수량을 정제하여 대여 가능률과 상태를 계산 |
+| `StationFilter` | 대여소 이름, 상태, 최소 잔여 자전거 수 조건을 차례대로 적용 |
+| `DashboardUI` | KPI 지표, Folium 지도 마커, 차트, 표 등 Streamlit 화면 요소 렌더링 |
 
-데이터는 DataFetcher → DataProcessor → StationFilter → DashboardUI 순서로 전달
+데이터는 `DataFetcher` → `DataProcessor` → `StationFilter` → `DashboardUI` 순서로 전달
 
 ## 주요 기능
-요약 지표(KPI): 전체 대여소 수, 이용 가능 자전거 수, 총 거치대 수, 평균 대여가능률<br>
-지도 시각화: Folium 기반 대여소 위치 및 혼잡도 상태 표시<br>
-차트 및 데이터 표: 잔여 자전거 부족 대여소 차트, 혼잡도 비율 차트, 필터링된 목록 테이블<br>
-조건 필터링: 대여소명 검색, 혼잡도 상태 선택(부족/보통/여유), 최소 자전거 수 슬라이더, 자전거 거치대 슬라이더, 데이터 새로고침, 서울 주요 권역 선택<br>
+- **요약 지표(KPI)** — 전체 대여소 수, 이용 가능 자전거 수, 총 거치대 수, 평균 대여가능률 표시
+- **지도 시각화** — Folium 기반 대여소 위치 및 혼잡도 상태 표시
+- **차트 및 데이터 표** — 잔여 자전거 부족 대여소 차트, 혼잡도 비율 차트, 필터링된 목록 테이블 표시
+- **조건 필터링** — 대여소명 검색, 혼잡도 상태 선택(부족/보통/여유), 최소 자전거 수 슬라이더, 자전거 거치대 슬라이더, 데이터 새로고침, 서울 주요 권역 선택
 
 ## 실행 방법
-필요 환경<br>
-Python 3.10 이상 환경에서 아래 라이브러리를 사용합니다.<br>
-streamlit, pandas, folium, plotly, requests, python-dotenv<br>
-pip install -r requirements.txt<br>
 
-대시보드 실행<br>
-streamlit run app.py<br>
-GitHub 저장소와 연결해 Streamlit Community Cloud로 배포<br>
-현재 url: https://seoulbikedashboard-test.streamlit.app/
+### 필요 환경
+
+- Python 3.10 이상
+- 주요 라이브러리 — Streamlit, pandas, Folium, Plotly, Requests, python-dotenv
+
+아래 명령으로 라이브러리를 설치합니다.
+
+```sh
+pip install -r requirements.txt
+```
+
+### 대시보드 실행
+
+```sh
+streamlit run app.py
+```
+
+### 배포
+
+GitHub 저장소를 Streamlit Community Cloud에 연결해 테스트 버전을 배포했습니다.
+
+[대시보드 열기](https://seoulbikedashboard-test.streamlit.app/)
