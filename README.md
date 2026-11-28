@@ -57,4 +57,4 @@ streamlit run app.py
 
 GitHub 저장소를 Streamlit Community Cloud에 연결해 테스트 버전을 배포했습니다.
 
-[대시보드 열기](https://seoulbikedashboard-test.streamlit.app/)
+[대시보드 열기](https://seoulbikedashboardgit-main.streamlit.app/) 
